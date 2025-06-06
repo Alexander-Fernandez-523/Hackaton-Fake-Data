@@ -1,0 +1,98 @@
+# Install Faker library
+!pip install faker pandas
+
+# Import libraries
+from faker import Faker
+import pandas as pd
+import random
+import os
+
+# Initialize Faker
+faker = Faker()
+
+# Set output folder
+output_folder = 'fake_data_output'
+os.makedirs(output_folder, exist_ok=True)
+
+# Customer Data
+def generate_customer_data(num_records):
+    return pd.DataFrame([{
+        'CustomerID': faker.uuid4(),
+        'FirstName': faker.first_name(),
+        'LastName': faker.last_name(),
+        'DateOfBirth': faker.date_of_birth(minimum_age=18, maximum_age=90),
+        'Email': faker.email(),
+        'Phone': faker.phone_number(),
+        'Address': faker.address().replace('\n', ', '),
+        'PreferredLanguage': random.choice(['EN', 'FR']),
+        'RiskScore': round(random.uniform(0, 1), 2)
+    } for _ in range(num_records)])
+
+
+# Account Data
+def generate_account_data(num_records, customer_ids):
+    return pd.DataFrame([{
+        'AccountID': faker.uuid4(),
+        'CustomerID': random.choice(customer_ids),
+        'AccountType': random.choice(['Checking', 'Savings', 'Credit', 'Loan']),
+        'AccountNumber': faker.bban(),
+        'OpenDate': faker.date_between(start_date='-10y', end_date='today'),
+        'BranchCode': faker.swift(length=8),
+        'CurrentBalance': round(random.uniform(0, 100000), 2),
+        'IsPrimary': random.choice([True, False])
+    } for _ in range(num_records)])
+
+
+# Transaction Data
+def generate_transaction_data(num_records, account_ids, customer_ids):
+    return pd.DataFrame([{
+        'TransactionID': faker.uuid4(),
+        'AccountID': random.choice(account_ids),
+        'CustomerID': random.choice(customer_ids),
+        'TransactionDate': faker.date_time_between(start_date='-5y', end_date='now'),
+        'Amount': round(random.uniform(-5000, 5000), 2),
+        'MerchantName': faker.company(),
+        'Category': random.choice([ 'Grocery', 'Utilities', 'Travel', 'Dining', 'Entertainment', 'Retail']),
+        'TransactionType': random.choice(['Debit', 'Credit']),
+        'Channel': random.choice(['POS', 'ATM', 'Online', 'Mobile'])
+    } for _ in range(num_records)])
+
+
+#Generate Campaign Name()
+def generate_campaign_name():
+    campaign_number = '1111' + ''.join([str(random.randint(0,9)) for _ in range(9)])
+    campaign_title = 'FY25 ' + faker.catch_phrase()
+    return f'{campaign_number} - {campaign_title}'
+
+#Web Engagement Data
+def generate_web_engagement_data(num_records, customer_ids):
+    return pd.DataFrame([{
+        'EngagementID': faker.uuid4(),
+        'CustomerID': random.choice(customer_ids),
+        'SessionID': faker.uuid4(),
+        'PageViewed': faker.uri_path(),
+        'TimeStamp': faker.date_time_between(start_date='-2y', end_date='now'),
+        'Device': random.choice(['Click', 'View', 'Submit Form', 'Download']),
+        'CampaignName': generate_campaign_name()
+    }for _ in range(num_records)])
+
+#Generate Customers
+df_customers = generate_customer_data(100)
+df_customers.to_csv(f'{output_folder}/customers_profile_001.csv', index=False)
+customer_ids = df_customers['CustomerID'].tolist()
+
+#Generate Accounts
+df_accounts = generate_account_data(150, customer_ids)
+df_accounts.to_csv(f'{output_folder}/accounts_table_001.csv', index=False)
+account_ids = df_accounts['AccountID'].tolist()
+
+#Generate Transactions
+df_transactions = generate_transaction_data(500, account_ids, customer_ids)
+df_transactions.to_csv(f'{output_folder}/transactions_table_001.csv', index=False)
+
+#Generate Web Engagement
+df_web_engagement = generate_web_engagement_data(500, customer_ids)
+df_web_engagement.to_csv(f'{output_folder}/web_engagement_table_001.csv', index=False)
+
+
+print("✅ Fake data generation complete! CSV files saved.")
